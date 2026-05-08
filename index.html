@@ -1,6 +1,4 @@
-
-
-  <div id="math-game" style="width:100%; max-width:900px; margin:auto; font-family:sans-serif; position: relative;">
+<div id="math-game" style="width:100%; max-width:900px; margin:auto; font-family:sans-serif; position: relative;">
 
 <!-- MathJaxの読み込み -->
 <script>
@@ -121,8 +119,9 @@ window.MathJax = {
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start; /* 縦方向の配置を調整 */
     align-items: center;
+    padding: 5px;
 }
 
 #math-game #top .front { background:#BBDEFB; color:#0D47A1; font-weight:bold; }
@@ -229,14 +228,16 @@ const definiteIntegralPairs = [
   {
     id: "defint_04",
     type: "対称性（奇関数）",
-    latexA: "\\int_{-a}^{a} f(x) \\,dx \\quad (f(-x)=-f(x))",
+    cond: "f(x) \\text{ は奇関数}",
+    latexA: "\\int_{-a}^{a} f(x) \\,dx",
     latexB: "0",
     note: "積分区間が原点対称 \\([-a, a]\\) で、関数が奇関数（原点対称：\\(\\sin x, x^3\\) など）であれば、計算せずとも結果は \\(0\\) になります。"
   },
   {
     id: "defint_05",
     type: "対称性（偶関数）",
-    latexA: "\\int_{-a}^{a} f(x) \\,dx \\quad (f(-x)=f(x))",
+    cond: "f(x) \\text{ は偶関数}",
+    latexA: "\\int_{-a}^{a} f(x) \\,dx",
     latexB: "2\\int_{0}^{a} f(x) \\,dx",
     note: "積分区間が \\([-a, a]\\) で偶関数（y軸対称：\\(\\cos x, x^2\\) など）の場合、半分 \\([0, a]\\) だけ計算して2倍するのが鉄則です。"
   },
@@ -342,8 +343,11 @@ function card(d, cardType){
     let b=document.createElement('div');
     b.className='back math-text'; 
     
-    let conditionHtml = (cardType === 'formula' && d.cond) ? `<div style="font-size:0.65em; color:#d32f2f; margin-bottom:5px;">\\( ${d.cond} \\) のとき</div>` : '';
-    b.innerHTML = conditionHtml + (cardType === 'formula' ? `\\( \\displaystyle ${d.latexA} \\)` : `\\( \\displaystyle ${d.latexB} \\)`);
+    // 【変更箇所】前提条件がある場合は、上部に小さく配置し、数式は中央に配置する
+    let conditionHtml = (cardType === 'formula' && d.cond) ? `<div style="font-size:0.75em; color:#d32f2f; margin-bottom:5px; width:100%; text-align:center; font-weight:bold;">【前提】\\( ${d.cond} \\)</div>` : '';
+    let formulaHtml = `<div style="flex-grow:1; display:flex; justify-content:center; align-items:center; width:100%;">\\( \\displaystyle ${cardType === 'formula' ? d.latexA : d.latexB} \\)</div>`;
+    
+    b.innerHTML = conditionHtml + formulaHtml;
 
     i.appendChild(f);
     i.appendChild(b);
@@ -384,10 +388,12 @@ function card(d, cardType){
             lock=true;
 
             setTimeout(()=>{
-                let isMatch = topSel.d.id === botSel.d.id;
+                // idが一致するか、または右辺（解答）が完全に一致していれば正解とする
+                let isMatch = (topSel.d.id === botSel.d.id) || (topSel.d.latexB === botSel.d.latexB);
                 let sign = "=";
                 
-                let condHtmlModal = topSel.d.cond ? `<div style="font-size:0.85em; color:#d32f2f; margin-bottom:5px; font-weight:bold;">【前提】 \\( ${topSel.d.cond} \\)</div>` : '';
+                // 【変更箇所】モーダル内でも前提条件をはっきり表示
+                let condHtmlModal = topSel.d.cond ? `<div style="font-size:0.85em; color:#d32f2f; margin-bottom:10px; padding-bottom:5px; border-bottom:1px dashed #d32f2f; font-weight:bold;">【前提】 \\( ${topSel.d.cond} \\)</div>` : '';
 
                 let modalBody = 
                     condHtmlModal + 
